@@ -1,2 +1,3 @@
 # PSoC Creator project for Metropolia PSoC-Zumo adapter
-1234
+Group 7
+Members: Julian Chan, Kendrick Kwong, Boris Hoi
