@@ -53,16 +53,79 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
+void progEnd(uint32_t delay);
+
+//week3 ex1
 #if 1
+//motor
+void zmain(void)
+{
+    motor_start();              // enable motor controller
+    motor_forward(0,0);         // set speed to zero to stop motors
+
+    
+    motor_forward(165,2000);     // moving forward
+    motor_turn(50,0,1050);     // turn
+    motor_forward(0,0);
+    vTaskDelay(1000);
+    
+    motor_forward(135, 1930);
+    motor_turn(50,0,1050); 
+    motor_forward(0,0);
+    vTaskDelay(1000);
+    
+    motor_forward(150, 1810);
+    motor_forward(0, 0);
+    
+    vTaskDelay(1000);
+    motor_turn(50, 0, 1260);
+    motor_forward(145, 500);
+    motor_forward(0, 0);
+    
+    motor_turn(50, 0, 300);
+    motor_forward(145, 300);
+    motor_turn(50, 0, 100);
+    motor_forward(145, 300);
+    motor_turn(50, 0, 200);
+    motor_forward(145, 180);
+    motor_forward(0, 0);
+    vTaskDelay(1000);
+    
+    motor_turn(50, 0, 220);
+    motor_forward(145, 700);
+    
+     
+    motor_forward(0,0);         // stop motors
+
+    motor_stop();               // disable motor controller
+    
+     progEnd(100);
+
+}
+#endif
+
+
+#if 0
 // Hello World!
 void zmain(void)
 {
+    
     printf("\nHello, World!\n");
+    //motor_start();
+    //motor_forward(0, 0);
+    //motor_forward(170, 2000);
+    //motor_forward(0, 0);
+    //vTaskDelay(1000); 
+    //motor_turn(100, 0, 500);
+    //motor_forward(0, 0);
+    //motor_stop();
+    
+    progEnd(100);
 
-    while(true)
-    {
-        vTaskDelay(100); // sleep (in an infinite loop)
-    }
+    //while(true)
+    //{
+      //  vTaskDelay(100); // sleep (in an infinite loop)
+    //}
  }   
 #endif
 
@@ -459,5 +522,12 @@ void zmain(void)
     }
  }   
 #endif
+void progEnd(uint32_t delay){
+    bool led = false;
+    while(true){
+        BatteryLed_Write(led^=1);
+        vTaskDelay(delay);
+    }    
+}
 
-/* [] END OF FILE */
+
