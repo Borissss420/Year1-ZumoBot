@@ -56,14 +56,14 @@
 void progEnd(uint32_t delay);
 
 //week3 ex1
-#if 1
+#if 0
 //motor
 void zmain(void)
 {
+    printf("\n3,2,1 start!\n");
     motor_start();              // enable motor controller
     motor_forward(0,0);         // set speed to zero to stop motors
 
-    
     motor_forward(165,2000);     // moving forward
     motor_turn(50,0,1050);     // turn
     motor_forward(0,0);
@@ -99,10 +99,44 @@ void zmain(void)
 
     motor_stop();               // disable motor controller
     
+    printf("\nTouch down!\n");
      progEnd(100);
 
 }
 #endif
+
+//week3 ex2
+#if 1
+void zmain(void)
+{
+    Ultra_Start();
+    motor_start();
+    motor_forward(0, 0);
+    
+    BatteryLed_Write(1);
+    while (SW1_Read()==1);
+    BatteryLed_Write(0);
+    vTaskDelay(1000);
+    
+    while (SW1_Read()==1){
+        int x = Ultra_GetDistance();
+        motor_forward(120, 50);
+        if(x < 10){
+            motor_forward(0, 0);
+            vTaskDelay(1000);
+            motor_backward(200, 1000);
+            motor_turn(250, 0, 350);
+        }   
+        
+    }
+    
+  
+    printf("Mission Completed");
+    motor_stop();
+
+ }   
+#endif
+
 
 
 #if 0
