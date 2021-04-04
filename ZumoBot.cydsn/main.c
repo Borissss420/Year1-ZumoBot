@@ -47,6 +47,8 @@
 #include <sys/time.h>
 #include "serial1.h"
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 /**
  * @file    main.c
  * @brief   
@@ -60,7 +62,9 @@ void progEnd(uint32_t delay);
 //motor
 void zmain(void)
 {
-    printf("\n3,2,1 start!\n");
+    // please place the bot to the starting line
+    // six red spots touch the black starting line
+    
     motor_start();              // enable motor controller
     motor_forward(0,0);         // set speed to zero to stop motors
 
@@ -106,7 +110,7 @@ void zmain(void)
 #endif
 
 //week3 ex2
-#if 1
+#if 0
 void zmain(void)
 {
     Ultra_Start();
@@ -125,17 +129,63 @@ void zmain(void)
             motor_forward(0, 0);
             vTaskDelay(1000);
             motor_backward(200, 1000);
-            motor_turn(250, 0, 350);
+            motor_turn(0, 250, 350);
         }   
-        
     }
     
-  
     printf("Mission Completed");
     motor_stop();
-
  }   
 #endif
+
+//week3 ex3
+//Tank turn function
+void tank_turn_left(uint8 speed,uint32 delay){
+    SetMotors(1, 0, speed, 0, delay);
+}
+
+void tank_turn_right(uint8 speed,uint32 delay){
+    SetMotors(0, 1, 0, speed, delay);
+}
+
+#if 1
+void zmain(void)
+{
+    Ultra_Start();
+    motor_start();
+    motor_forward(0, 0);
+    
+    BatteryLed_Write(1);
+    while(SW1_Read()==1);
+    BatteryLed_Write(0);
+    vTaskDelay(1000);
+    
+    while (SW1_Read()==1){
+        int x = Ultra_GetDistance();
+        
+        if(x < 10){
+            motor_forward(0, 0);
+            vTaskDelay(1000);
+            motor_backward(145, 1000);
+            
+           // found that 200 speed and 262 delay = angle 90 
+           int angle = (rand()%(786-262+1))+ 262; // random in range
+           if(rand()%2 == 1){ // random turn left or right
+                tank_turn_left(200, angle);
+           }else{
+                tank_turn_right(200, angle);
+           }
+        }
+        motor_forward(120, 50);
+    }
+    if(SW1_Read()== 0){
+        motor_stop();
+        printf("Mission Completed");
+    }    
+    motor_stop();
+ }
+#endif
+
 
 
 
@@ -144,22 +194,8 @@ void zmain(void)
 void zmain(void)
 {
     
-    printf("\nHello, World!\n");
-    //motor_start();
-    //motor_forward(0, 0);
-    //motor_forward(170, 2000);
-    //motor_forward(0, 0);
-    //vTaskDelay(1000); 
-    //motor_turn(100, 0, 500);
-    //motor_forward(0, 0);
-    //motor_stop();
     
     progEnd(100);
-
-    //while(true)
-    //{
-      //  vTaskDelay(100); // sleep (in an infinite loop)
-    //}
  }   
 #endif
 
@@ -556,6 +592,9 @@ void zmain(void)
     }
  }   
 #endif
+
+
+//custom funcation
 void progEnd(uint32_t delay){
     bool led = false;
     while(true){
@@ -563,5 +602,9 @@ void progEnd(uint32_t delay){
         vTaskDelay(delay);
     }    
 }
+
+
+
+
 
 
