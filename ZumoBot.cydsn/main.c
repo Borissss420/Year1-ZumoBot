@@ -148,7 +148,7 @@ void tank_turn_right(uint8 speed,uint32 delay){
     SetMotors(0, 1, 0, speed, delay);
 }
 
-#if 1
+#if 0
 void zmain(void)
 {
     Ultra_Start();
@@ -187,17 +187,135 @@ void zmain(void)
 #endif
 
 
+//week4 ex1***************************
+struct sensors_ dig;
 
+void moveW4E1(void){
+    int count = 0;
+    
+    while(count < 6){
+        if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
+            count++;
+            //count delay
+            if(count <= 5){
+               vTaskDelay(350); 
+            }else {
+               vTaskDelay(0); 
+            }      
+        }
+        
+        motor_forward(100, 0);
+        reflectance_digital(&dig);
+    }    
+    motor_forward(0, 0);
+}    
 
 #if 0
-// Hello World!
 void zmain(void)
 {
+    reflectance_start();
+    reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
+    motor_start();
+    motor_forward(0, 0);
+    Ultra_Start();
     
+    //move to the first line
+    BatteryLed_Write(1);
+    while(SW1_Read()==1);
+    BatteryLed_Write(0);
+    vTaskDelay(1000);
     
+    while(dig.L3 == 0 && dig.L2 == 0 && dig.R2 == 0 && dig.R3 == 0){
+        motor_forward(255, 0);
+        reflectance_digital(&dig);
+    }    
+    motor_forward(0, 0);
+    
+    IR_Start();
+    IR_flush();
+    
+    bool led = false;
+    while(true)
+    {
+        IR_wait();  // wait for IR command
+        led = !led;
+        BatteryLed_Write(led);
+        moveW4E1();
+    }
     progEnd(100);
- }   
+ }
+
 #endif
+
+//week4 ex2 *********************************
+void moveW4E2(void){
+    int count = 0;
+    
+    while(count < 2){
+        motor_forward(100, 0);
+        
+        if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
+            count++;
+            //count delay
+            if(count < 2){
+               vTaskDelay(350); 
+            }else {
+               vTaskDelay(0); 
+            }      
+        }
+        
+        if(dig.L2 == 0 && dig.R2 == 1){
+            motor_turn(50, 0, 10);
+        }else if(dig.L2 == 1 && dig.R2 == 0){
+            motor_turn(0, 50, 10);
+        }   
+        reflectance_digital(&dig);
+       
+    }    
+    motor_forward(0, 0);
+}    
+
+#if 1
+ void zmain(void){
+    reflectance_start();
+    reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
+    motor_start();
+    motor_forward(0, 0);
+    Ultra_Start();
+    
+    //move to the first line
+    BatteryLed_Write(1);
+    while(SW1_Read()==1);
+    BatteryLed_Write(0);
+    vTaskDelay(1000);
+    
+    while(dig.L3 == 0 && dig.L2 == 0 && dig.R2 == 0 && dig.R3 == 0){
+        motor_forward(255, 0);
+        reflectance_digital(&dig);
+    }    
+    
+    motor_forward(0, 0);
+    
+    IR_Start();
+    IR_flush();
+    
+    bool led = false;
+    while(true)
+    {
+        IR_wait();  // wait for IR command
+        led = !led;
+        BatteryLed_Write(led);
+        moveW4E2();   
+    }
+    progEnd(100);
+    
+    
+    
+ }   
+#endif   
+
+
+
 
 #if 0
 // Name and age
