@@ -348,7 +348,7 @@ void moveW4E3(void){
     motor_forward(0, 0);
 }    
 
-#if 1
+#if 0
 void zmain(void){
     reflectance_start();
     reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
@@ -382,7 +382,31 @@ void zmain(void){
     
     progEnd(100);
 } 
-#endif      
+#endif    
+
+//week 5 ex1****************************************************************
+
+#if 1
+void zmain(void){
+    TickType_t Tick = xTaskGetTickCount();
+    TickType_t lastTick = 0;
+    
+    while(true){
+        while(SW1_Read());
+        vTaskDelay(10);
+        Tick = xTaskGetTickCount();
+        
+        int interval = Tick - lastTick;//Time difference
+        print_mqtt("Zumo07/button", "Milliseconds between two button presses: %d", interval);
+        
+        while(!SW1_Read());
+        vTaskDelay(10);
+        lastTick = Tick;
+    }    
+}    
+    
+#endif    
+
 
 
 
