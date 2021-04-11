@@ -187,7 +187,7 @@ void zmain(void)
 #endif
 
 
-//week4 ex1***************************
+//week4 ex1******************************************************
 struct sensors_ dig;
 
 void moveW4E1(void){
@@ -247,7 +247,8 @@ void zmain(void)
 
 #endif
 
-//week4 ex2 *********************************
+//week4 ex2 **********************************************************
+
 void moveW4E2(void){
     int count = 0;
     
@@ -275,7 +276,7 @@ void moveW4E2(void){
     motor_forward(0, 0);
 }    
 
-#if 1
+#if 0
  void zmain(void){
     reflectance_start();
     reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
@@ -307,12 +308,81 @@ void moveW4E2(void){
         BatteryLed_Write(led);
         moveW4E2();   
     }
-    progEnd(100);
+    
     
     
     
  }   
 #endif   
+
+//week 4 ex3*******************************************************
+
+void moveW4E3(void){
+    int count = 0;
+    
+    while(count < 6){
+        if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
+            count++;
+            //count delay
+            if(count <= 4){
+                vTaskDelay(300);
+            }    
+            if(count == 2){
+                vTaskDelay(500);
+                tank_turn_left(200, 262);
+                motor_forward(100, 0);
+                vTaskDelay(500);
+            }
+            
+            if(count == 3 || count == 4){
+                vTaskDelay(500);
+                tank_turn_right(200, 262);
+                motor_forward(100, 0);
+                vTaskDelay(500);
+            }    
+        }
+        
+        motor_forward(100, 0);
+        reflectance_digital(&dig);
+    }   
+    motor_forward(0, 0);
+}    
+
+#if 1
+void zmain(void){
+    reflectance_start();
+    reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
+    motor_start();
+    motor_forward(0, 0);
+    Ultra_Start();
+    
+    //move to the first line
+    BatteryLed_Write(1);
+    while(SW1_Read()==1);
+    BatteryLed_Write(0);
+    vTaskDelay(1000);
+    
+    while(dig.L3 == 0 && dig.L2 == 0 && dig.R2 == 0 && dig.R3 == 0){
+        motor_forward(255, 0);
+        reflectance_digital(&dig);
+    }    
+    motor_forward(0, 0);
+    
+    IR_Start();
+    IR_flush();
+    
+    bool led = false;
+    while(true)
+    {
+        IR_wait();  // wait for IR command
+        led = !led;
+        BatteryLed_Write(led);
+        moveW4E3();   
+    }
+    
+    progEnd(100);
+} 
+#endif      
 
 
 
