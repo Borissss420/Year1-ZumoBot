@@ -383,10 +383,40 @@ void zmain(void){
     progEnd(100);
 } 
 #endif    
+//week 5 ex2****************************************************************
+
+#if 1
+void zmain(void){
+ while(true)
+            {    motor_start();
+                 Ultra_Start();
+                motor_forward(200,100);
+                if(Ultra_GetDistance() < 11){  //sensor detecting the obstacle
+                   motor_forward(0,0);
+                vTaskDelay(500);
+                motor_backward(200,150);
+                if(rand()%2 == 1){   //determining whether to turn left or right
+                  tank_turn_left(200,262);  // found that 200 speed and 262 delay = angle 90
+                print_mqtt("Zumo07/turn: ", "%s", "left");
+                }else{
+                 tank_turn_right(200,262);  
+                print_mqtt("Zumo07/turn: ", "%s", "right");
+                }
+                }
+                motor_forward(200,100); //keep moving
+                    
+}      
+}
+    
+    
+    
+
+
+#endif
 
 //week 5 ex1****************************************************************
 
-#if 1
+#if 0
 void zmain(void){
     TickType_t Tick = xTaskGetTickCount();
     TickType_t lastTick = 0;
@@ -406,8 +436,6 @@ void zmain(void){
 }    
     
 #endif    
-
-
 
 
 
