@@ -383,36 +383,6 @@ void zmain(void){
     progEnd(100);
 } 
 #endif    
-//week 5 ex2****************************************************************
-
-#if 1
-void zmain(void){
- while(true)
-            {    motor_start();
-                 Ultra_Start();
-                motor_forward(200,100);
-                if(Ultra_GetDistance() < 11){  //sensor detecting the obstacle
-                   motor_forward(0,0);
-                vTaskDelay(500);
-                motor_backward(200,150);
-                if(rand()%2 == 1){   //determining whether to turn left or right
-                  tank_turn_left(200,262);  // found that 200 speed and 262 delay = angle 90
-                print_mqtt("Zumo07/turn: ", "%s", "left");
-                }else{
-                 tank_turn_right(200,262);  
-                print_mqtt("Zumo07/turn: ", "%s", "right");
-                }
-                }
-                motor_forward(200,100); //keep moving
-                    
-}      
-}
-    
-    
-    
-
-
-#endif
 
 //week 5 ex1****************************************************************
 
@@ -437,7 +407,96 @@ void zmain(void){
     
 #endif    
 
+//week 5 ex2****************************************************************
 
+#if 0
+void zmain(void){
+ while(true)
+            {    motor_start();
+                 Ultra_Start();
+                motor_forward(200,100);
+                if(Ultra_GetDistance() < 11){  //sensor detecting the obstacle
+                   motor_forward(0,0);
+                vTaskDelay(500);
+                motor_backward(200,150);
+                if(rand()%2 == 1){   //determining whether to turn left or right
+                  tank_turn_left(200,262);  // found that 200 speed and 262 delay = angle 90
+                print_mqtt("Zumo07/turn: ", "%s", "left");
+                }else{
+                 tank_turn_right(200,262);  
+                print_mqtt("Zumo07/turn: ", "%s", "right");
+                }
+                }
+                motor_forward(200,100); //keep moving
+                    
+    }      
+}
+   
+#endif
+
+//week 5 ex3****************************************************************
+void moveW5E3(void) {
+    TickType_t Ttime = xTaskGetTickCount();
+    TickType_t PreviousTtime = 0;
+    int count = 0;
+    int interval = Ttime - PreviousTtime;//Time difference
+    
+    Ttime = xTaskGetTickCount();
+    
+    
+    while(count < 2){
+        if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
+            count++;
+                
+        }
+        
+        motor_forward(100, 0);
+        reflectance_digital(&dig);
+    }   
+    motor_forward(0, 0);
+    PreviousTtime = Ttime;
+    Ttime = xTaskGetTickCount();
+    print_mqtt("Zumo07/button", "Milliseconds between two button presses: %d", interval);
+} 
+
+#if 1
+
+void zmain(void){
+ while(true) {  
+    reflectance_start();
+    reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
+    motor_start();
+    motor_forward(0, 0);
+    Ultra_Start();
+    
+    //move to the first line
+    BatteryLed_Write(1);
+    while(SW1_Read()==1);
+    BatteryLed_Write(0);
+    vTaskDelay(1000);
+    while(dig.L3 == 0 && dig.L2 == 0 && dig.R2 == 0 && dig.R3 == 0){
+        motor_forward(255, 0);
+        reflectance_digital(&dig);
+    }    
+    motor_forward(0, 0);
+    
+    IR_Start();
+    IR_flush();
+    
+    bool led = false;
+    while(true)
+    {
+        IR_wait();  // wait for IR command
+        led = !led;
+        BatteryLed_Write(led);
+        moveW5E3();   
+    }
+    
+    progEnd(100);         
+   }      
+}
+   
+#endif
 
 #if 0
 // Name and age
