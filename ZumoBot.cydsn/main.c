@@ -461,8 +461,7 @@ void moveW5E3(void) {
 
 #if 1
 
-void zmain(void){
- while(true) {  
+void zmain(void){ 
     reflectance_start();
     reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
     motor_start();
@@ -492,8 +491,7 @@ void zmain(void){
         moveW5E3();   
     }
     
-    progEnd(100);         
-   }      
+    progEnd(100);               
 }
    
 #endif
