@@ -436,26 +436,32 @@ void zmain(void){
 
 //week 5 ex3****************************************************************
 void moveW5E3(void) {
-    TickType_t Ttime = 0;
-    TickType_t PreviousTtime = 0;
-    int count = 0;
-    int interval = (Ttime - PreviousTtime)%1000;//Time difference
+    TickType_t StartTime = 0, EndTime = 0;
+    int count = 0, interval = 0;
     
-    Ttime = xTaskGetTickCount();
-    
-    
-    while(count < 3){
+    StartTime = xTaskGetTickCount();
+    print_mqtt("Zumo07/Start time", "%d", StartTime);
+
+    while(count < 2){
         if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
             count++;
-            vTaskDelay(1000);
+            vTaskDelay(110);
         }
         
         motor_forward(100, 0);
         reflectance_digital(&dig);
-    }   
+    }
+    while(count < 3){
+        if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
+            count++;
+        }
+        motor_forward(100, 0);
+        reflectance_digital(&dig);
+    }
     motor_forward(0, 0);
-    PreviousTtime = Ttime;
-    Ttime = xTaskGetTickCount();
+    EndTime = xTaskGetTickCount();
+    print_mqtt("Zumo07/End Time", "%d", EndTime);
+    interval = EndTime - StartTime;
     print_mqtt("Zumo07/button", "Milliseconds between two ticks: %d", interval);
 } 
 
