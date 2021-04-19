@@ -436,18 +436,18 @@ void zmain(void){
 
 //week 5 ex3****************************************************************
 void moveW5E3(void) {
-    TickType_t Ttime = xTaskGetTickCount();
+    TickType_t Ttime = 0;
     TickType_t PreviousTtime = 0;
     int count = 0;
-    int interval = Ttime - PreviousTtime;//Time difference
+    int interval = (Ttime - PreviousTtime)%1000;//Time difference
     
     Ttime = xTaskGetTickCount();
     
     
-    while(count < 2){
+    while(count < 3){
         if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
             count++;
-                
+            vTaskDelay(1000);
         }
         
         motor_forward(100, 0);
@@ -456,7 +456,7 @@ void moveW5E3(void) {
     motor_forward(0, 0);
     PreviousTtime = Ttime;
     Ttime = xTaskGetTickCount();
-    print_mqtt("Zumo07/button", "Milliseconds between two button presses: %d", interval);
+    print_mqtt("Zumo07/button", "Milliseconds between two ticks: %d", interval);
 } 
 
 #if 1
@@ -494,6 +494,86 @@ void zmain(void){
     progEnd(100);               
 }
    
+#endif
+
+//Project sumo wrestling *********************************************
+//A function that move the robot to the edge
+void firstline(void){
+    BatteryLed_Write(1);
+    while(SW1_Read()==1);
+    BatteryLed_Write(0);
+    vTaskDelay(1000);
+    while(dig.L3 == 0 && dig.L2 == 0 && dig.R2 == 0 && dig.R3 == 0){
+        motor_forward(255, 0);
+        reflectance_digital(&dig);
+    }    
+    motor_forward(0, 0);
+    print_mqtt("Zumo07/READY", "zumo");
+}
+
+//Tank turn function from W3E3
+/*void tank_turn_left(uint8 speed,uint32 delay){
+    SetMotors(1, 0, speed, 0, delay);
+}
+
+void tank_turn_right(uint8 speed,uint32 delay){
+    SetMotors(0, 1, 0, speed, delay);
+}*/
+
+//A function about the wrestling
+/*void wrestling(void){
+    int startT, endT, obstacleT = 0;
+    print_mqtt("Zumo07/Start", "%d", startT);
+    while (SW1_Read()==1){
+        int x = Ultra_GetDistance();
+        int count = 0;
+        
+        if(x < 5){
+            motor_forward(0, 0);
+            motor_backward(145, 1000);
+            
+           // found that 200 speed and 262 delay = angle 90 
+           int angle = 262; // angle
+           if(count == 1){ // turn left in the first time
+                tank_turn_left(200, angle);
+                count++;
+           }else{
+                tank_turn_right(200, angle);
+           }
+        }
+        motor_forward(120, 50);
+    }
+    if(SW1_Read()== 0){
+        motor_stop();
+        printf("Mission Completed");
+    }    
+    motor_stop();
+}
+*/
+#if 0
+void zmain(void){
+    reflectance_start();
+    reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
+    motor_start();
+    motor_forward(0, 0);
+    Ultra_Start();
+    
+    firstline();
+    
+    IR_Start();
+    IR_flush();
+    
+    bool led = false;
+    while(true)
+    {
+        IR_wait();  // wait for IR command
+        led = !led;
+        BatteryLed_Write(led);
+        moveW5E3();   
+    }
+    
+    progEnd(100);               
+}
 #endif
 
 #if 0
