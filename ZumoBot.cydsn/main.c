@@ -443,7 +443,7 @@ void moveW5E3(void) {
     print_mqtt("Zumo07/Start time", "%d", StartTime);
 
     while(count < 2){
-        if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
+        if(dig.L3 == 1 && dig.L2 == 1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
             count++;
             vTaskDelay(110);
         }
@@ -452,7 +452,7 @@ void moveW5E3(void) {
         reflectance_digital(&dig);
     }
     while(count < 3){
-        if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
+        if(dig.L3 == 1 && dig.L2 == 1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
             count++;
         }
         motor_forward(100, 0);
@@ -465,7 +465,7 @@ void moveW5E3(void) {
     print_mqtt("Zumo07/button", "Milliseconds between two ticks: %d", interval);
 } 
 
-#if 1
+#if 0
 
 void zmain(void){ 
     reflectance_start();
@@ -503,16 +503,20 @@ void zmain(void){
 #endif
 
 //Project sumo wrestling *********************************************
-//A function that move the robot to the edge
-void firstline(void){
+//A function that move the robot to the edge of the ring
+void startingline(void){
     BatteryLed_Write(1);
     while(SW1_Read()==1);
     BatteryLed_Write(0);
     vTaskDelay(1000);
-    while(dig.L3 == 0 && dig.L2 == 0 && dig.R2 == 0 && dig.R3 == 0){
+    while(dig.L3 == 0 && dig.R3 == 0){
+        //Move along the line turn left
+        if(dig.L2 == 1 && dig.R2 == 0){
+            motor_turn(0, 70, 10);
+        }    
         motor_forward(255, 0);
         reflectance_digital(&dig);
-    }    
+    }
     motor_forward(0, 0);
     print_mqtt("Zumo07/READY", "zumo");
 }
@@ -527,36 +531,60 @@ void tank_turn_right(uint8 speed,uint32 delay){
 }*/
 
 //A function about the wrestling
-/*void wrestling(void){
-    int startT, endT, obstacleT = 0;
+void wrestling(void){
+       
+    TickType_t startT = 0, endT = 0, obstacleT = 0;
+    int interval = 0;
+    startT = xTaskGetTickCount();
     print_mqtt("Zumo07/Start", "%d", startT);
+    
     while (SW1_Read()==1){
         int x = Ultra_GetDistance();
-        int count = 0;
+        vTaskDelay(100);
         
+        //Using ultra sensor to detect obsticle
         if(x < 5){
             motor_forward(0, 0);
-            motor_backward(145, 1000);
-            
-           // found that 200 speed and 262 delay = angle 90 
-           int angle = 262; // angle
-           if(count == 1){ // turn left in the first time
-                tank_turn_left(200, angle);
-                count++;
-           }else{
-                tank_turn_right(200, angle);
-           }
+            motor_backward(145, 200);
+           
+           // tank turn left 
+           //tank_turn_left(200, angle);
+            motor_turn(0, 150, 200);
+            obstacleT = xTaskGetTickCount();
+            print_mqtt("zumo7", "Red obstacle %d", obstacleT);
         }
-        motor_forward(120, 50);
+        
+        //Stay inside the ring
+        if(dig.L3 == 0 && dig.R3 == 1){
+             motor_forward(0, 0);
+             motor_backward(50, 500);
+             //tank_turn_left(200, angle);
+             motor_turn(0, 90, 1000);
+             obstacleT = xTaskGetTickCount();
+             print_mqtt("zumo7", "Black obstacle %d", obstacleT);
+         }
+         if(dig.L3 == 1 && dig.R3 == 0){
+              motor_forward(0, 0);
+              motor_backward(50, 500);
+              //tank_turn_right(200, angle);
+              motor_turn(90, 0, 1000);
+              obstacleT = xTaskGetTickCount();
+              print_mqtt("zumo7", "Black obstacle %d", obstacleT);
+         }
+        motor_forward(100, 1);
+        reflectance_digital(&dig);
     }
     if(SW1_Read()== 0){
         motor_stop();
-        printf("Mission Completed");
+        endT = xTaskGetTickCount();
+        interval = endT - startT;
+        print_mqtt("zumo7", "stop %d", endT);
+        print_mqtt("zumo7", "time %d", interval);
     }    
     motor_stop();
 }
-*/
-#if 0
+
+#if 1
 void zmain(void){
     reflectance_start();
     reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
@@ -564,7 +592,7 @@ void zmain(void){
     motor_forward(0, 0);
     Ultra_Start();
     
-    firstline();
+    startingline();
     
     IR_Start();
     IR_flush();
@@ -575,7 +603,7 @@ void zmain(void){
         IR_wait();  // wait for IR command
         led = !led;
         BatteryLed_Write(led);
-        moveW5E3();   
+        wrestling();   
     }
     
     progEnd(100);               
