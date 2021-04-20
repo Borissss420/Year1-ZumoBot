@@ -571,7 +571,7 @@ void wrestling(void){
               obstacleT = xTaskGetTickCount();
               print_mqtt("zumo7", "Black obstacle %d", obstacleT);
          }
-        motor_forward(100, 1);
+        motor_forward(70, 0);
         reflectance_digital(&dig);
     }
     if(SW1_Read()== 0){
@@ -584,7 +584,7 @@ void wrestling(void){
     motor_stop();
 }
 
-#if 1
+#if 0
 void zmain(void){
     reflectance_start();
     reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
@@ -610,6 +610,92 @@ void zmain(void){
 }
 #endif
 
+//Project line follower *********************************************
+void linefollower(void){
+    int count = 0;
+    TickType_t startT = 0, endT = 0 ,missT =0, findT =0;
+    int interval = 0;
+    startT = xTaskGetTickCount();
+    print_mqtt("Zumo07/Start", "%d", startT);
+    bool stay_on_line =true;   
+    while(count < 3){
+        motor_forward(255,1);
+        //count the line
+        if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
+            count++;
+            //count delay
+            if(count < 3){
+               vTaskDelay(350); 
+            }else{
+               vTaskDelay(0);              
+               endT = xTaskGetTickCount();
+               interval = endT - startT;
+               print_mqtt("Zumo/07", "time %d", endT);
+               print_mqtt("zumo7", "time %d", interval);
+               motor_forward(0,0);
+            }  
+        }
+       
+        //Sense the track
+        //Simple left turn
+        if(dig.L2 == 0 && dig.R2 == 1){
+           SetMotors(0, 1, 150, 255, 10);
+        }    
+        //Simple Right turn
+        if(dig.L2 == 1 && dig.R2 == 0){ 
+            SetMotors(1, 0, 150, 255, 10);
+        }    
+        //Left turn > 90 degrees
+        if(dig.R2 == 1 && dig.R3 == 0 && dig.L2 == 1 && dig.L3 == 1){
+           SetMotors(0, 1, 150, 255, 10);
+        }
+        //Right turn > 90 degrees
+        if(dig.R2 == 1 && dig.R3 == 1 && dig.L2 == 1 && dig.L3 == 0){
+            SetMotors(1, 0, 150, 255, 10);
+        }
+       reflectance_digital(&dig);
+    }    
+    motor_forward(0, 0);
+    
+}
+    void firstline(void){
+    BatteryLed_Write(1);
+    while(SW1_Read()==1);
+    BatteryLed_Write(0);
+    vTaskDelay(1000);
+    while(dig.L3 == 0 && dig.L2 == 0 && dig.R2 == 0 && dig.R3 == 0){
+        motor_forward(255, 0);
+        reflectance_digital(&dig);
+    }    
+    
+    motor_forward(0, 0);
+    }
+    
+ #if 1
+void zmain(void){
+    reflectance_start();
+    reflectance_set_threshold(9000, 9000, 18000, 18000, 9000, 9000);
+    motor_start();
+    motor_forward(0, 0);
+    Ultra_Start();
+    firstline();   
+    IR_Start();
+    IR_flush();
+    
+    bool led = false;
+    while(true)
+    {
+        IR_wait();  // wait for IR command
+        led = !led;
+        BatteryLed_Write(led);
+        linefollower();   
+    }
+    
+    progEnd(100);               
+}
+#endif   
+    
+ 
 #if 0
 // Name and age
 void zmain(void)
