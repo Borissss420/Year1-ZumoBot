@@ -715,8 +715,9 @@ void zmain(void){
 void maze(void){
     int count = 0; //testing purpose
     int obs = 0; //obstacle
+    int edge = 0;
     int countX = 0, countY = -3; //coordinate
-    int dir = 0; //direction 0 = up, 1 = left, 2 = right
+    int mode = 0; //mode 0 = move up(turn left), 1 = move left, 2 = move right, 3 = move up(turn right), 4 = stop the fucking car
     TickType_t startT = 0, endT = 0; //timing purpose
     int interval = 0; //interval between starting and ending time
     startT = xTaskGetTickCount(); //get starting time
@@ -724,13 +725,13 @@ void maze(void){
     
     //Big Big Loop !!!!!
     while(true){
-        //what to do when facing up !!!
-        while(dir == 0){
+        //what to do when facing up !!! (Turn left)
+        while(mode == 0){
             //count the line
-            if(dig.L3 == 1 && dig.L2 == 1 && dig.L1 == 1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
+            if(dig.L3 == 1 || dig.R3 == 1){
                 countY++; //Position purpose Y-coordinate
                 print_mqtt("Zumo7/position", " %d %d", countX, countY); //printing position
-                vTaskDelay(300); //Avoiding double counting
+                vTaskDelay(400); //Avoiding double counting
             }
             //Using ultra sensor to detect obstacle
             int x = Ultra_GetDistance();
@@ -740,34 +741,71 @@ void maze(void){
             }
             //what to do when detected obstacle
             if(obs == 1){
-                motor_backward(100, 450); //move backward first
+                if(countX == -3){
+                    mode = 3;
+                }
+                else {
+                    motor_backward(100, 450); //move backward first
                 //countY--; //Position purpose
+                    while(dig.L3 == 0 && dig.R3 == 0){ //then move forward
+                        motor_forward(100, 0);
+                        if(dig.L3 == 1 && dig.R3 == 1){ //until reached the line of cross road
+                        break;
+                        }
+                        reflectance_digital(&dig);
+                    }
+                    motor_forward(20, 300); //This 1
+                    motor_turn(0, 175, 300); //This 2 together make a 90 degree left turn
+                    obs = 0; //set obstacle to none
+                    mode = 1; //set direction to left
+                    motor_forward(0, 0); //stop the car
+                    reflectance_digital(&dig);
+                }
+            }
+            //Turn left if there is no road ahead
+            if(countY >= 10 && countX >= 0 && dig.L1 == 0 && dig.R1 == 0){
+                edge = 1;
+            }
+            if(countY >= 10 && countX <= 0 && dig.L1 == 0 && dig.R1 == 0){
+                edge = 1;
+                mode = 3;
+            }
+            if(edge == 1 && countX >=0){
+                motor_backward(100, 450); //move backward first
+                reflectance_digital(&dig);
                 while(dig.L3 == 0 && dig.R3 == 0){ //then move forward
                     motor_forward(100, 0);
-                    if(dig.L3 == 1 && dig.R3 == 1){ //until reached the line of cross road
-                        break;
+                    if(dig.L3 == 1){ //until reached the line of cross road
+                    break;
                     }
                     reflectance_digital(&dig);
                 }
                 motor_forward(20, 300); //This 1
                 motor_turn(0, 175, 300); //This 2 together make a 90 degree left turn
-                obs = 0; //set obstacle to none
-                dir = 1; //set direction to left
+                edge = 0; //set edge to negative
+                mode = 1; //set direction to left
+                //countY++; //Position purpose Y-coordinate
+                print_mqtt("Zumo7/position", " %d %d", countX, countY); //printing position
                 motor_forward(0, 0); //stop the car
-                reflectance_digital(&dig);
+                reflectance_digital(&dig);   
+            }
+            //Stop the fucking car
+            if(countX == 0 && countY == 13){
+                motor_forward(10, 1000);
+                mode = 4;
             }
             //continue to move forward
             motor_forward(100, 1);
             reflectance_digital(&dig);
         } 
        ///what to do when facing left !!!
-        while(dir == 1){
+        while(mode == 1){
             //count the line
-            if(dig.L3 == 1 && dig.L2 == 1 && dig.L1 == 1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3){
+            /*if(dig.L3 == 1 && dig.L2 == 1 && dig.L1 == 1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3){
                 countX--; //Position purpose X-coordinate
                 print_mqtt("Zumo7/position", " %d %d", countX, countY); //printing position
                 vTaskDelay(200); //Avoiding double counting
-            }
+            }*/
             //Using ultra sensor to detect obstacle
             int x = Ultra_GetDistance();
             //obstacle ahead
@@ -791,7 +829,7 @@ void maze(void){
                 motor_forward(100, 60); //This 4
                 motor_turn(175, 0, 300); //This 5 together make a 180 degree turn
                 obs = 0; //set obstacle to none
-                dir = 2; //set direction to right
+                mode = 2; //set direction to right
                 motor_forward(0, 0); //stop the car
                 reflectance_digital(&dig);
             }
@@ -800,14 +838,16 @@ void maze(void){
                 motor_forward(0, 0);
                 motor_forward(100, 60); //This 1
                 motor_turn(175, 0, 300); //This 2 together make a 90 degree right turn
-                dir = 0; //set direction to up
+                countX--; //Position purpose X - coordinate
+                print_mqtt("Zumo7/position", " %d %d", countX, countY); //Print position
+                mode = 0; //set direction to up
             }
             //continue to move forward
             motor_forward(100, 1);
             reflectance_digital(&dig);
         }
         //what to do when facing right !!!
-        while(dir == 1){
+        while(mode == 2){
             //count the line
             /*if(dig.L3 == 1 && dig.L2 ==1 && dig.R1 == 1 && dig.R2 == 1 && dig.R3 == 1){
                 countY++;
@@ -835,7 +875,7 @@ void maze(void){
                 motor_forward(100, 60); //This 4
                 motor_turn(0, 175, 300); //This 5 together make a 180 degree turn
                 obs = 0; //set obstacle to none
-                dir = 2; //set direction to right
+                mode = 2; //set direction to right
                 motor_forward(0, 0); //stop the car
                 reflectance_digital(&dig);
             }
@@ -843,18 +883,96 @@ void maze(void){
                 motor_forward(0, 0);
                 motor_forward(100, 60); //This 1
                 motor_turn(0, 175, 300); //This 2 together make a 90 degree left turn
-                dir = 0; //set direction to up
+                countX++; //Position purpose X - coordinate
+                print_mqtt("Zumo7/position", " %d %d", countX, countY); //Print position
+                mode = 3; //set direction to up
             }
             //continue to move forward
             motor_forward(100, 1);
             reflectance_digital(&dig);
         }
-        motor_forward(0, 0);
-        endT = xTaskGetTickCount();
-        interval = endT - startT;
-        print_mqtt("Zumo07/stop", " %d", endT);
-        print_mqtt("Zumo07/time", " %d", interval);
+        //what to do when facing up !!! (Turn right)
+        while(mode == 3){
+            //count the line
+            if(dig.L3 == 1 || dig.R3 == 1){
+                countY++; //Position purpose Y-coordinate
+                print_mqtt("Zumo7/position", " %d %d", countX, countY); //printing position
+                vTaskDelay(400); //Avoiding double counting
+            }
+            //Using ultra sensor to detect obstacle
+            int x = Ultra_GetDistance();
+            //obstacle ahead
+            if(x < 5){ 
+                obs = 1;
+            }
+            //what to do when detected obstacle
+            if(obs == 1){
+                if(countX == 3){
+                    mode = 1;
+                }
+                else {
+                    motor_backward(100, 450); //move backward first
+                    //countY--; //Position purpose
+                    while(dig.L3 == 0 && dig.R3 == 0){ //then move forward
+                        motor_forward(100, 0);
+                        if(dig.L3 == 1 && dig.R3 == 1){ //until reached the line of cross road
+                        break;
+                        }
+                        reflectance_digital(&dig);
+                    }
+                    motor_forward(20, 300); //This 1
+                    motor_turn(175, 0, 300); //This 2 together make a 90 degree right turn
+                    obs = 0; //set obstacle to none
+                    mode = 2; //set direction to right
+                    motor_forward(0, 0); //stop the car
+                    reflectance_digital(&dig);
+                }
+            }
+            //Turn right if there is no road ahead
+            if(countY >= 10 && countX <=0 && dig.L1 == 0 && dig.R1 == 0){
+                edge = 1;
+            }
+            if(countY >= 10 && countX >=0 && dig.L1 == 0 && dig.R1 == 0){
+                edge = 1;
+                mode = 0;
+            }
+            if(edge == 1 && countX <=0){
+                motor_backward(100, 450); //move backward first
+                reflectance_digital(&dig);
+                while(dig.L3 == 0 && dig.R3 == 0){ //then move forward
+                    motor_forward(100, 0);
+                    if(dig.R3 == 1){ //until reached the line of cross road
+                    break;
+                    }
+                    reflectance_digital(&dig);
+                }
+                motor_forward(20, 300); //This 1
+                motor_turn(175, 0, 300); //This 2 together make a 90 degree right turn
+                edge = 0; //set edge to negative
+                mode = 2; //set direction to right
+                //countY++; //Position purpose Y-coordinate
+                print_mqtt("Zumo7/position", " %d %d", countX, countY); //printing position
+                motor_forward(0, 0); //stop the car
+                reflectance_digital(&dig);   
+            }
+            //Stop the fucking car
+            if(countX == 0 && countY == 13){
+                motor_forward(10, 1000);
+                mode = 4;
+            }
+            //continue to move forward
+            motor_forward(100, 1);
+            reflectance_digital(&dig);
+        }
+        if(mode == 4){
+            break;
+        }
     }
+    motor_forward(0, 0);
+    endT = xTaskGetTickCount();
+    interval = endT - startT;
+    print_mqtt("Zumo07/stop", " %d", endT);
+    print_mqtt("Zumo07/time", " %d", interval);
 }
 #if 1
 void zmain(void){
